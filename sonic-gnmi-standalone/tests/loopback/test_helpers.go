@@ -56,15 +56,25 @@ func SetupTestServer(t *testing.T, tempDir string, cfg *TestServerConfig) *TestS
 
 	addr := fmt.Sprintf("127.0.0.1:%d", port)
 
+	// Check if gNOI File service is requested
+	enableGNOIFile := false
+	for _, service := range cfg.Services {
+		if service == "gnoi.file" {
+			enableGNOIFile = true
+			break
+		}
+	}
+
 	// Set global server config
 	serverConfig.Global = &serverConfig.Config{
-		Addr:          addr,
-		RootFS:        cfg.RootFS,
-		TLSEnabled:    cfg.UseTLS,
-		MTLSEnabled:   cfg.UseMTLS,
-		TLSCertFile:   cfg.TLSCert,
-		TLSKeyFile:    cfg.TLSKey,
-		TLSCACertFile: cfg.TLSCACert,
+		Addr:           addr,
+		RootFS:         cfg.RootFS,
+		TLSEnabled:     cfg.UseTLS,
+		MTLSEnabled:    cfg.UseMTLS,
+		TLSCertFile:    cfg.TLSCert,
+		TLSKeyFile:     cfg.TLSKey,
+		TLSCACertFile:  cfg.TLSCACert,
+		EnableGNOIFile: enableGNOIFile,
 	}
 
 	// Create server builder
@@ -86,6 +96,8 @@ func SetupTestServer(t *testing.T, tempDir string, cfg *TestServerConfig) *TestS
 		switch service {
 		case "gnoi.system":
 			builder = builder.EnableGNOISystem()
+		case "gnoi.file":
+			builder = builder.EnableGNOIFile()
 		case "gnmi":
 			builder = builder.EnableGNMI()
 		}

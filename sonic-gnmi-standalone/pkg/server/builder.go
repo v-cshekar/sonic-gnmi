@@ -34,10 +34,12 @@ package server
 import (
 	"github.com/golang/glog"
 	"github.com/openconfig/gnmi/proto/gnmi"
+	"github.com/openconfig/gnoi/file"
 	"github.com/openconfig/gnoi/system"
 
 	"github.com/sonic-net/sonic-gnmi/sonic-gnmi-standalone/pkg/server/config"
 	gnmiserver "github.com/sonic-net/sonic-gnmi/sonic-gnmi-standalone/pkg/server/gnmi"
+	gnoiFile "github.com/sonic-net/sonic-gnmi/sonic-gnmi-standalone/pkg/server/gnoi/file"
 	gnoiSystem "github.com/sonic-net/sonic-gnmi/sonic-gnmi-standalone/pkg/server/gnoi/system"
 )
 
@@ -129,6 +131,13 @@ func (b *ServerBuilder) EnableGNMI() *ServerBuilder {
 	return b
 }
 
+// EnableGNOIFile enables the gNOI File service, which provides file management
+// operations including firmware file listing and file transfer capabilities.
+func (b *ServerBuilder) EnableGNOIFile() *ServerBuilder {
+	b.services["gnoi.file"] = true
+	return b
+}
+
 // EnableServices enables multiple services at once based on a slice of service names.
 // Valid service names include: "gnoi.system", "gnoi.file", "gnoi.containerz", "gnmi".
 func (b *ServerBuilder) EnableServices(services []string) *ServerBuilder {
@@ -214,8 +223,15 @@ func (b *ServerBuilder) registerServices(srv *Server, rootFS string) {
 		serviceCount++
 	}
 
+	// Register gNOI File service if enabled
+	if b.services["gnoi.file"] {
+		fileServer := gnoiFile.NewServer(rootFS)
+		file.RegisterFileServer(srv.grpcServer, fileServer)
+		glog.Info("Registered gNOI File service")
+		serviceCount++
+	}
+
 	// Future services will be implemented:
-	// - gNOI File service
 	// - gNOI Containerz service
 
 	if serviceCount == 0 {

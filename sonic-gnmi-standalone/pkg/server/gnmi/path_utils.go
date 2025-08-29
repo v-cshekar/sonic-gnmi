@@ -90,3 +90,63 @@ func getDiskSpaceField(path *gnmi.Path) (string, error) {
 
 	return "", fmt.Errorf("invalid disk space path structure: %s", pathToString(path))
 }
+
+// isFirmwarePath checks if the given path is requesting firmware file information.
+// Returns true if the path starts with /sonic/system/firmware.
+func isFirmwarePath(path *gnmi.Path) bool {
+	return len(path.Elem) >= 3 &&
+		path.Elem[0].Name == "sonic" &&
+		path.Elem[1].Name == "system" &&
+		path.Elem[2].Name == "firmware"
+}
+
+// extractFirmwareDirectory extracts the firmware directory path from a gNMI path.
+// For example, from /sonic/system/firmware[directory=/lib/firmware]/files,
+// it extracts "/lib/firmware".
+func extractFirmwareDirectory(path *gnmi.Path) (string, error) {
+	if !isFirmwarePath(path) {
+		return "", fmt.Errorf("not a firmware path: %s", pathToString(path))
+	}
+
+	firmwareDir, ok := path.Elem[2].Key["directory"]
+	if !ok {
+		return "", fmt.Errorf("firmware directory not specified, expected format: " +
+			"/sonic/system/firmware[directory=<path>]/...")
+	}
+
+	return firmwareDir, nil
+}
+
+// isFirmwareFilesPath checks if the path is requesting firmware files listing.
+// Returns true if the path contains /files.
+func isFirmwareFilesPath(path *gnmi.Path) bool {
+	return isFirmwarePath(path) &&
+		len(path.Elem) >= 4 &&
+		path.Elem[3].Name == "files"
+}
+
+// getFirmwareFileField determines which firmware file field is being requested.
+// Returns "list", "count", or specific filename based on the path.
+func getFirmwareFileField(path *gnmi.Path) (string, error) {
+	if !isFirmwareFilesPath(path) {
+		return "", fmt.Errorf("not a firmware files path: %s", pathToString(path))
+	}
+
+	// If path ends at files, return list of all files
+	if len(path.Elem) == 4 {
+		return "list", nil
+	}
+
+	// If path has a specific field, check what it is
+	if len(path.Elem) == 5 {
+		switch path.Elem[4].Name {
+		case "count":
+			return "count", nil
+		default:
+			// Assume it's a specific filename
+			return path.Elem[4].Name, nil
+		}
+	}
+
+	return "", fmt.Errorf("invalid firmware files path structure: %s", pathToString(path))
+}

@@ -17,6 +17,11 @@ func (s *Server) Capabilities(ctx context.Context, req *gnmi.CapabilityRequest) 
 			{
 				Name:         "sonic-system",
 				Organization: "SONiC",
+				Version:      "1.1.0",
+			},
+			{
+				Name:         "sonic-firmware",
+				Organization: "SONiC",
 				Version:      "1.0.0",
 			},
 		},
@@ -32,8 +37,13 @@ func (s *Server) Capabilities(ctx context.Context, req *gnmi.CapabilityRequest) 
 // This is used for documentation and validation purposes.
 func getSupportedPaths() []string {
 	return []string{
+		// Filesystem paths
 		"/sonic/system/filesystem[path=*]/disk-space",
 		"/sonic/system/filesystem[path=*]/disk-space/total-mb",
 		"/sonic/system/filesystem[path=*]/disk-space/available-mb",
+		// Firmware paths
+		"/sonic/system/firmware[directory=*]/files",
+		"/sonic/system/firmware[directory=*]/files/count",
+		"/sonic/system/firmware[directory=*]/files/*",
 	}
 }

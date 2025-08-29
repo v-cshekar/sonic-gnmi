@@ -34,9 +34,16 @@ func TestGNMIDiskSpaceLoopback(t *testing.T) {
 
 		assert.Equal(t, "0.7.0", resp.GNMIVersion, "Unexpected gNMI version")
 		assert.NotEmpty(t, resp.SupportedModels, "No supported models")
-		assert.Equal(t, "sonic-system", resp.SupportedModels[0].Name, "Unexpected model name")
+		
+		// Check that we have the expected models
+		require.Len(t, resp.SupportedModels, 2, "Expected 2 supported models")
+		assert.Equal(t, "sonic-system", resp.SupportedModels[0].Name, "Unexpected first model name")
 		assert.Equal(t, "SONiC", resp.SupportedModels[0].Organization, "Unexpected organization")
-		assert.Equal(t, "1.0.0", resp.SupportedModels[0].Version, "Unexpected model version")
+		assert.Equal(t, "1.1.0", resp.SupportedModels[0].Version, "Unexpected sonic-system model version")
+		
+		assert.Equal(t, "sonic-firmware", resp.SupportedModels[1].Name, "Unexpected second model name")
+		assert.Equal(t, "SONiC", resp.SupportedModels[1].Organization, "Unexpected organization")
+		assert.Equal(t, "1.0.0", resp.SupportedModels[1].Version, "Unexpected sonic-firmware model version")
 	})
 
 	t.Run("disk_space_tempdir", func(t *testing.T) {
