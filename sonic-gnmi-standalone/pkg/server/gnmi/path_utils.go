@@ -77,45 +77,45 @@ func validateDiskSpacePath(path *gnmi.Path) error {
 	return nil
 }
 
-// isFirmwarePath checks if the given path is requesting firmware file information.
-// Returns true if the path starts with /sonic/system/firmware.
-func isFirmwarePath(path *gnmi.Path) bool {
+// isSonicImagePath checks if the given path is requesting SONIC image file information.
+// Returns true if the path starts with /sonic/system/sonic-image.
+func isSonicImagePath(path *gnmi.Path) bool {
 	return len(path.Elem) >= 3 &&
 		path.Elem[0].Name == "sonic" &&
 		path.Elem[1].Name == "system" &&
-		path.Elem[2].Name == "firmware"
+		path.Elem[2].Name == "sonic-image"
 }
 
-// extractFirmwareDirectory extracts the firmware directory path from a gNMI path.
-// For example, from /sonic/system/firmware[directory=/lib/firmware]/files,
-// it extracts "/lib/firmware".
-func extractFirmwareDirectory(path *gnmi.Path) (string, error) {
-	if !isFirmwarePath(path) {
-		return "", fmt.Errorf("not a firmware path: %s", pathToString(path))
+// extractSonicImageDirectory extracts the SONIC image directory path from a gNMI path.
+// For example, from /sonic/system/sonic-image[directory=/lib/sonic-images]/files,
+// it extracts "/lib/sonic-images".
+func extractSonicImageDirectory(path *gnmi.Path) (string, error) {
+	if !isSonicImagePath(path) {
+		return "", fmt.Errorf("not a SONIC image path: %s", pathToString(path))
 	}
 
-	firmwareDir, ok := path.Elem[2].Key["directory"]
+	sonicImageDir, ok := path.Elem[2].Key["directory"]
 	if !ok {
-		return "", fmt.Errorf("firmware directory not specified, expected format: " +
-			"/sonic/system/firmware[directory=<path>]/...")
+		return "", fmt.Errorf("SONIC image directory not specified, expected format: " +
+			"/sonic/system/sonic-image[directory=<path>]/...")
 	}
 
-	return firmwareDir, nil
+	return sonicImageDir, nil
 }
 
-// isFirmwareFilesPath checks if the path is requesting firmware files listing.
+// isSonicImageFilesPath checks if the path is requesting SONIC image files listing.
 // Returns true if the path contains /files.
-func isFirmwareFilesPath(path *gnmi.Path) bool {
-	return isFirmwarePath(path) &&
+func isSonicImageFilesPath(path *gnmi.Path) bool {
+	return isSonicImagePath(path) &&
 		len(path.Elem) >= 4 &&
 		path.Elem[3].Name == "files"
 }
 
-// getFirmwareFileField determines which firmware file field is being requested.
+// getSonicImageFileField determines which SONIC image file field is being requested.
 // Returns "list", "count", or specific filename based on the path.
-func getFirmwareFileField(path *gnmi.Path) (string, error) {
-	if !isFirmwareFilesPath(path) {
-		return "", fmt.Errorf("not a firmware files path: %s", pathToString(path))
+func getSonicImageFileField(path *gnmi.Path) (string, error) {
+	if !isSonicImageFilesPath(path) {
+		return "", fmt.Errorf("not a SONIC image files path: %s", pathToString(path))
 	}
 
 	// If path ends at files, return list of all files
@@ -134,5 +134,5 @@ func getFirmwareFileField(path *gnmi.Path) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("invalid firmware files path structure: %s", pathToString(path))
+	return "", fmt.Errorf("invalid SONIC image files path structure: %s", pathToString(path))
 }

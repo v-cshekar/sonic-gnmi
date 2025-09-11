@@ -25,18 +25,6 @@ func TestCapabilities(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 
-	// Check supported models
-	assert.Len(t, resp.SupportedModels, 2)
-
-	// Check sonic-system model
-	assert.Equal(t, "sonic-system", resp.SupportedModels[0].Name)
-	assert.Equal(t, "SONiC", resp.SupportedModels[0].Organization)
-	assert.Equal(t, "1.1.0", resp.SupportedModels[0].Version)
-
-	// Check sonic-firmware model
-	assert.Equal(t, "sonic-firmware", resp.SupportedModels[1].Name)
-	assert.Equal(t, "SONiC", resp.SupportedModels[1].Organization)
-	assert.Equal(t, "1.0.0", resp.SupportedModels[1].Version)
 	// Check supported models - should be empty without proper YANG schema
 	assert.Empty(t, resp.SupportedModels, "No YANG models should be registered without proper schema definitions")
 

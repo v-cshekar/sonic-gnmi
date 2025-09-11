@@ -56,16 +56,8 @@ func SetupTestServer(t *testing.T, tempDir string, cfg *TestServerConfig) *TestS
 
 	addr := fmt.Sprintf("127.0.0.1:%d", port)
 
-	// Check if gNOI File service is requested
-	enableGNOIFile := false
-	for _, service := range cfg.Services {
-		if service == "gnoi.file" {
-			enableGNOIFile = true
-			break
-		}
-	}
-
 	// Set global server config
+	// Note: gNOI File service is no longer needed for SONIC image file listing
 	serverConfig.Global = &serverConfig.Config{
 		Addr:           addr,
 		RootFS:         cfg.RootFS,
@@ -74,7 +66,7 @@ func SetupTestServer(t *testing.T, tempDir string, cfg *TestServerConfig) *TestS
 		TLSCertFile:    cfg.TLSCert,
 		TLSKeyFile:     cfg.TLSKey,
 		TLSCACertFile:  cfg.TLSCACert,
-		EnableGNOIFile: enableGNOIFile,
+		EnableGNOIFile: false, // No longer used
 	}
 
 	// Create server builder

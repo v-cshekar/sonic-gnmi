@@ -19,7 +19,7 @@
 //	-mtls
 //	    Enable mutual TLS (requires CA certificate)
 //	-enable-gnoi-file
-//	    Enable gNOI File service including firmware file listing
+//	    (Deprecated) No longer needed - SONIC image file listing uses gNMI paths
 //	-v int
 //	    Verbose logging level (0-2)
 //	-logtostderr
@@ -39,8 +39,8 @@
 //	# With mTLS enabled
 //	./sonic-gnmi-standalone -mtls -tls-ca-cert=ca.crt
 //
-//	# With gNOI File service enabled for firmware listing
-//	./sonic-gnmi-standalone -enable-gnoi-file
+//	# SONIC image file listing (no special flags needed)
+//	./sonic-gnmi-standalone
 package main
 
 import (
@@ -79,6 +79,7 @@ func main() {
 		builder = builder.EnableGNOIFile()
 	} else {
 		glog.V(1).Info("gNOI File service disabled (use --enable-gnoi-file to enable)")
+	}
 
 	// Configure certificates based on advanced options
 	if config.Global.UseSONiCConfig {

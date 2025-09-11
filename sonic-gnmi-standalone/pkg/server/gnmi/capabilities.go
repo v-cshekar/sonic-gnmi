@@ -33,9 +33,9 @@ func getSupportedPaths() []string {
 		"/sonic/system/filesystem[path=*]/disk-space",
 		"/sonic/system/filesystem[path=*]/disk-space/total-mb",
 		"/sonic/system/filesystem[path=*]/disk-space/available-mb",
-		// Firmware paths
-		"/sonic/system/firmware[directory=*]/files",
-		"/sonic/system/firmware[directory=*]/files/count",
-		"/sonic/system/firmware[directory=*]/files/*",
+		// SONIC image paths
+		"/sonic/system/sonic-image[directory=*]/files",
+		"/sonic/system/sonic-image[directory=*]/files/count",
+		"/sonic/system/sonic-image[directory=*]/files/*",
 	}
 }

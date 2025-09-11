@@ -37,13 +37,11 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/openconfig/gnmi/proto/gnmi"
-	"github.com/openconfig/gnoi/file"
 	"github.com/openconfig/gnoi/system"
 
 	"github.com/sonic-net/sonic-gnmi/sonic-gnmi-standalone/pkg/cert"
 	"github.com/sonic-net/sonic-gnmi/sonic-gnmi-standalone/pkg/server/config"
 	gnmiserver "github.com/sonic-net/sonic-gnmi/sonic-gnmi-standalone/pkg/server/gnmi"
-	gnoiFile "github.com/sonic-net/sonic-gnmi/sonic-gnmi-standalone/pkg/server/gnoi/file"
 	gnoiSystem "github.com/sonic-net/sonic-gnmi/sonic-gnmi-standalone/pkg/server/gnoi/system"
 )
 
@@ -196,15 +194,17 @@ func (b *ServerBuilder) EnableGNMI() *ServerBuilder {
 	return b
 }
 
-// EnableGNOIFile enables the gNOI File service, which provides file management
-// operations including firmware file listing and file transfer capabilities.
+// EnableGNOIFile was removed as SONIC image file listing is now handled
+// through gNMI paths using internal file operations, not gNOI File service.
+// This method is kept for backward compatibility but does nothing.
 func (b *ServerBuilder) EnableGNOIFile() *ServerBuilder {
-	b.services["gnoi.file"] = true
+	glog.Info("gNOI File service is no longer needed for SONIC image file listing")
 	return b
 }
 
 // EnableServices enables multiple services at once based on a slice of service names.
-// Valid service names include: "gnoi.system", "gnoi.file", "gnoi.containerz", "gnmi".
+// Valid service names include: "gnoi.system", "gnmi".
+// Note: "gnoi.file" is no longer supported - SONIC image file listing uses gNMI paths.
 func (b *ServerBuilder) EnableServices(services []string) *ServerBuilder {
 	for _, service := range services {
 		b.services[service] = true
@@ -351,13 +351,8 @@ func (b *ServerBuilder) registerServices(srv *Server, rootFS string) {
 		serviceCount++
 	}
 
-	// Register gNOI File service if enabled
-	if b.services["gnoi.file"] {
-		fileServer := gnoiFile.NewServer(rootFS)
-		file.RegisterFileServer(srv.grpcServer, fileServer)
-		glog.Info("Registered gNOI File service")
-		serviceCount++
-	}
+	// gNOI File service registration removed - SONIC image file listing
+	// is now handled through gNMI paths using internal file operations
 
 	// Future services will be implemented:
 	// - gNOI Containerz service

@@ -37,7 +37,7 @@ func Initialize() {
 	tlsCACert := flag.String("tls-ca-cert", "", "Path to TLS CA certificate file for client verification (optional)")
 	noTLS := flag.Bool("no-tls", false, "Disable TLS (TLS is enabled by default)")
 	enableMTLS := flag.Bool("mtls", false, "Enable mutual TLS (requires CA certificate)")
-	enableGNOIFile := flag.Bool("enable-gnoi-file", false, "Enable gNOI File service including firmware file listing")
+	enableGNOIFile := flag.Bool("enable-gnoi-file", false, "(Deprecated) No longer needed - SONIC image file listing uses gNMI paths")
 
 	// Certificate management flags
 	useSONiCConfig := flag.Bool("sonic-config", false, "Load certificate configuration from SONiC ConfigDB via Redis")
