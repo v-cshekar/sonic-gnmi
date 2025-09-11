@@ -57,16 +57,15 @@ func SetupTestServer(t *testing.T, tempDir string, cfg *TestServerConfig) *TestS
 	addr := fmt.Sprintf("127.0.0.1:%d", port)
 
 	// Set global server config
-	// Note: gNOI File service is no longer needed for SONIC image file listing
+	// SONIC image file listing is always available as core gNMI functionality
 	serverConfig.Global = &serverConfig.Config{
-		Addr:           addr,
-		RootFS:         cfg.RootFS,
-		TLSEnabled:     cfg.UseTLS,
-		MTLSEnabled:    cfg.UseMTLS,
-		TLSCertFile:    cfg.TLSCert,
-		TLSKeyFile:     cfg.TLSKey,
-		TLSCACertFile:  cfg.TLSCACert,
-		EnableGNOIFile: false, // No longer used
+		Addr:          addr,
+		RootFS:        cfg.RootFS,
+		TLSEnabled:    cfg.UseTLS,
+		MTLSEnabled:   cfg.UseMTLS,
+		TLSCertFile:   cfg.TLSCert,
+		TLSKeyFile:    cfg.TLSKey,
+		TLSCACertFile: cfg.TLSCACert,
 	}
 
 	// Create server builder
@@ -89,7 +88,7 @@ func SetupTestServer(t *testing.T, tempDir string, cfg *TestServerConfig) *TestS
 		case "gnoi.system":
 			builder = builder.EnableGNOISystem()
 		case "gnoi.file":
-			builder = builder.EnableGNOIFile()
+			// gnoi.file service no longer exists - SONIC image listing uses gNMI paths
 		case "gnmi":
 			builder = builder.EnableGNMI()
 		}
