@@ -47,9 +47,11 @@ func (c *Client) GetSonicImageFiles(ctx context.Context, directory string) (*Son
 		},
 	}
 
-	glog.V(2).Infof("Requesting SONIC image files for directory: %s", directory)
+	glog.V(2).Infof("🔵 CLIENT: Requesting SONIC image files for directory: %s", directory)
+	glog.V(3).Infof("🔵 CLIENT: Constructed gNMI path: %s", path.String())
 
 	// Make the gNMI Get request
+	glog.V(3).Infof("🔵 CLIENT: Sending gNMI Get request with JSON encoding")
 	resp, err := c.Get(ctx, []*gnmi.Path{path}, gnmi.Encoding_JSON)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get SONIC image files for directory %s: %w", directory, err)

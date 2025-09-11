@@ -61,12 +61,16 @@ func (s *Server) processPath(path *gnmi.Path) (*gnmi.Update, error) {
 	pathStr := pathToString(path)
 
 	// Route to appropriate handler based on path structure
+	glog.V(3).Infof("🟢 SERVER: Routing path: %s", pathStr)
 	switch {
 	case isFilesystemPath(path):
+		glog.V(3).Infof("🟢 SERVER: → Routing to filesystem handler")
 		return s.handleFilesystemPath(path)
 	case isSonicImagePath(path):
+		glog.V(3).Infof("🟢 SERVER: → Routing to SONIC image handler")
 		return s.handleSonicImagePath(path)
 	default:
+		glog.V(3).Infof("🔴 SERVER: → No handler found for path")
 		return nil, status.Errorf(codes.NotFound, "path not found: %s", pathStr)
 	}
 }

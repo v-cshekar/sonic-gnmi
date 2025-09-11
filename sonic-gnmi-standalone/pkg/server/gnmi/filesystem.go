@@ -35,14 +35,20 @@ func (s *Server) handleFilesystemPath(path *gnmi.Path) (*gnmi.Update, error) {
 // handleSonicImagePath processes SONIC image-related gNMI path requests.
 // It supports listing SONIC image files in specified directories when gNOI File service is enabled.
 func (s *Server) handleSonicImagePath(path *gnmi.Path) (*gnmi.Update, error) {
+	glog.V(3).Infof("🟡 HANDLER: handleSonicImagePath called with path: %s", pathToString(path))
+
 	// Extract the SONIC image directory from the gNMI path
 	sonicImageDir, err := extractSonicImageDirectory(path)
 	if err != nil {
+		glog.V(3).Infof("🔴 HANDLER: Failed to extract directory: %v", err)
 		return nil, status.Errorf(codes.InvalidArgument, "invalid SONIC image path: %v", err)
 	}
 
+	glog.V(3).Infof("🟡 HANDLER: Extracted directory: %s", sonicImageDir)
+
 	// Check if this is a SONIC image files request
 	if isSonicImageFilesPath(path) {
+		glog.V(3).Infof("🟡 HANDLER: → Delegating to files request handler")
 		return s.handleSonicImageFilesRequest(path, sonicImageDir)
 	}
 
@@ -101,13 +107,15 @@ func (s *Server) handleSonicImageFilesRequest(path *gnmi.Path, sonicImageDir str
 		return nil, status.Errorf(codes.InvalidArgument, "invalid SONIC image files path: %v", err)
 	}
 
-	glog.V(2).Infof("Listing SONIC image files in directory: %s using internal file library", sonicImageDir)
+	glog.V(2).Infof("🟠 FILES: Listing SONIC image files in directory: %s using internal file library", sonicImageDir)
+	glog.V(3).Infof("🟠 FILES: Requested field: %s, rootFS: %s", field, s.rootFS)
 
 	// Use internal file library to get SONIC image files information
 	var value interface{}
 
 	switch field {
 	case "count":
+		glog.V(3).Infof("🟠 FILES: → Getting file count")
 		count, err := file.GetSonicImageFileCount(sonicImageDir, s.rootFS)
 		if err != nil {
 			glog.Errorf("Failed to get SONIC image file count in %s: %v", sonicImageDir, err)
@@ -116,6 +124,7 @@ func (s *Server) handleSonicImageFilesRequest(path *gnmi.Path, sonicImageDir str
 		value = count
 
 	case "list":
+		glog.V(3).Infof("🟠 FILES: → Getting file list")
 		files, err := file.ListSonicImageFiles(sonicImageDir, s.rootFS)
 		if err != nil {
 			glog.Errorf("Failed to list SONIC image files in %s: %v", sonicImageDir, err)

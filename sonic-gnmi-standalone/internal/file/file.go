@@ -24,10 +24,11 @@ type SonicImageFileInfo struct {
 // This function walks through the directory and returns information about all files,
 // with special focus on SONIC image files (typically .bin files).
 func ListSonicImageFiles(directory string, rootFS string) ([]SonicImageFileInfo, error) {
-	glog.V(2).Infof("Listing SONIC image files in directory: %s", directory)
+	glog.V(2).Infof("🟣 INTERNAL: ListSonicImageFiles called with directory: %s", directory)
 
 	// Resolve the SONIC image directory path with rootFS
 	resolvedPath := resolveFilesystemPath(directory, rootFS)
+	glog.V(3).Infof("🟣 INTERNAL: Resolved path: %s → %s (rootFS: %s)", directory, resolvedPath, rootFS)
 
 	// Check if directory exists
 	if _, err := os.Stat(resolvedPath); os.IsNotExist(err) {
@@ -81,7 +82,8 @@ func ListSonicImageFiles(directory string, rootFS string) ([]SonicImageFileInfo,
 		return nil, fmt.Errorf("failed to walk directory %s: %v", directory, err)
 	}
 
-	glog.V(2).Infof("Found %d files in SONIC image directory %s", len(files), directory)
+	glog.V(2).Infof("🟣 INTERNAL: Found %d files in SONIC image directory %s", len(files), directory)
+	glog.V(3).Infof("🟣 INTERNAL: File list: %+v", files)
 	return files, nil
 }
 
