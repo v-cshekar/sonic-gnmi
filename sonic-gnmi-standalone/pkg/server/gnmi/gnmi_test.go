@@ -37,6 +37,8 @@ func TestCapabilities(t *testing.T) {
 	assert.Equal(t, "sonic-firmware", resp.SupportedModels[1].Name)
 	assert.Equal(t, "SONiC", resp.SupportedModels[1].Organization)
 	assert.Equal(t, "1.0.0", resp.SupportedModels[1].Version)
+	// Check supported models - should be empty without proper YANG schema
+	assert.Empty(t, resp.SupportedModels, "No YANG models should be registered without proper schema definitions")
 
 	// Check supported encodings
 	assert.Contains(t, resp.SupportedEncodings, gnmi.Encoding_JSON)
@@ -190,83 +192,6 @@ func TestExtractFilesystemPath(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := extractFilesystemPath(tt.path)
-			if tt.expectError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
-			}
-		})
-	}
-}
-
-func TestGetDiskSpaceField(t *testing.T) {
-	tests := []struct {
-		name        string
-		path        *gnmi.Path
-		expected    string
-		expectError bool
-	}{
-		{
-			name: "both fields",
-			path: &gnmi.Path{
-				Elem: []*gnmi.PathElem{
-					{Name: "sonic"},
-					{Name: "system"},
-					{Name: "filesystem", Key: map[string]string{"path": "/host"}},
-					{Name: "disk-space"},
-				},
-			},
-			expected:    "both",
-			expectError: false,
-		},
-		{
-			name: "total field",
-			path: &gnmi.Path{
-				Elem: []*gnmi.PathElem{
-					{Name: "sonic"},
-					{Name: "system"},
-					{Name: "filesystem", Key: map[string]string{"path": "/host"}},
-					{Name: "disk-space"},
-					{Name: "total-mb"},
-				},
-			},
-			expected:    "total",
-			expectError: false,
-		},
-		{
-			name: "available field",
-			path: &gnmi.Path{
-				Elem: []*gnmi.PathElem{
-					{Name: "sonic"},
-					{Name: "system"},
-					{Name: "filesystem", Key: map[string]string{"path": "/host"}},
-					{Name: "disk-space"},
-					{Name: "available-mb"},
-				},
-			},
-			expected:    "available",
-			expectError: false,
-		},
-		{
-			name: "invalid field",
-			path: &gnmi.Path{
-				Elem: []*gnmi.PathElem{
-					{Name: "sonic"},
-					{Name: "system"},
-					{Name: "filesystem", Key: map[string]string{"path": "/host"}},
-					{Name: "disk-space"},
-					{Name: "invalid-field"},
-				},
-			},
-			expected:    "",
-			expectError: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := getDiskSpaceField(tt.path)
 			if tt.expectError {
 				assert.Error(t, err)
 			} else {

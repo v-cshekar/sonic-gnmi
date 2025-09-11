@@ -2,7 +2,6 @@ package gnmi
 
 import (
 	"encoding/json"
-	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -60,9 +59,8 @@ func (s *Server) handleFirmwarePath(path *gnmi.Path) (*gnmi.Update, error) {
 
 // handleDiskSpaceRequest processes disk space queries for a specific filesystem path.
 func (s *Server) handleDiskSpaceRequest(path *gnmi.Path, fsPath string) (*gnmi.Update, error) {
-	// Determine which field is being requested
-	field, err := getDiskSpaceField(path)
-	if err != nil {
+	// Validate the disk space path
+	if err := validateDiskSpacePath(path); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid disk space path: %v", err)
 	}
 
@@ -78,10 +76,11 @@ func (s *Server) handleDiskSpaceRequest(path *gnmi.Path, fsPath string) (*gnmi.U
 		return nil, status.Errorf(codes.Internal, "failed to retrieve disk space for path %s: %v", fsPath, err)
 	}
 
-	// Create the response value based on requested field
-	value, err := s.createDiskSpaceValue(info, fsPath, field)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create response: %v", err)
+	// Create the response value
+	value := map[string]interface{}{
+		"path":         fsPath,
+		"total-mb":     info.TotalMB,
+		"available-mb": info.AvailableMB,
 	}
 
 	// Marshal to JSON
@@ -189,22 +188,4 @@ func (s *Server) resolveFilesystemPath(fsPath string) string {
 
 	// Relative path - use as-is (though this is unusual for filesystem queries)
 	return fsPath
-}
-
-// createDiskSpaceValue creates the appropriate value structure based on the requested field.
-func (s *Server) createDiskSpaceValue(info *diskspace.DiskSpaceInfo, fsPath string, field string) (interface{}, error) {
-	switch field {
-	case "total":
-		return info.TotalMB, nil
-	case "available":
-		return info.AvailableMB, nil
-	case "both":
-		return map[string]interface{}{
-			"path":         fsPath,
-			"total-mb":     info.TotalMB,
-			"available-mb": info.AvailableMB,
-		}, nil
-	default:
-		return nil, fmt.Errorf("unknown field: %s", field)
-	}
 }

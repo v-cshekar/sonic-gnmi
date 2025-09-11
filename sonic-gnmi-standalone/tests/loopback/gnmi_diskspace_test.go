@@ -44,6 +44,7 @@ func TestGNMIDiskSpaceLoopback(t *testing.T) {
 		assert.Equal(t, "sonic-firmware", resp.SupportedModels[1].Name, "Unexpected second model name")
 		assert.Equal(t, "SONiC", resp.SupportedModels[1].Organization, "Unexpected organization")
 		assert.Equal(t, "1.0.0", resp.SupportedModels[1].Version, "Unexpected sonic-firmware model version")
+		assert.Empty(t, resp.SupportedModels, "No YANG models should be registered without proper schema definitions")
 	})
 
 	t.Run("disk_space_tempdir", func(t *testing.T) {
@@ -68,22 +69,6 @@ func TestGNMIDiskSpaceLoopback(t *testing.T) {
 		assert.Equal(t, ".", diskInfo.Path, "Path mismatch")
 		assert.Greater(t, diskInfo.TotalMB, int64(0), "Total MB should be positive")
 		assert.GreaterOrEqual(t, diskInfo.AvailableMB, int64(0), "Available MB should be non-negative")
-	})
-
-	t.Run("disk_space_total_only", func(t *testing.T) {
-		// Test total disk space only
-		totalMB, err := client.GetDiskSpaceTotal(ctx, ".")
-		require.NoError(t, err, "GetDiskSpaceTotal RPC failed")
-
-		assert.Greater(t, totalMB, int64(0), "Total MB should be positive")
-	})
-
-	t.Run("disk_space_available_only", func(t *testing.T) {
-		// Test available disk space only
-		availableMB, err := client.GetDiskSpaceAvailable(ctx, ".")
-		require.NoError(t, err, "GetDiskSpaceAvailable RPC failed")
-
-		assert.GreaterOrEqual(t, availableMB, int64(0), "Available MB should be non-negative")
 	})
 }
 

@@ -35,7 +35,7 @@ func TestNewClient_InvalidConfig(t *testing.T) {
 func TestClientConfig_Validation(t *testing.T) {
 	// Test that configuration is properly validated
 	config := &ClientConfig{
-		Target:  "localhost:50051",
+		Target:  "localhost:50055",
 		Timeout: 5 * time.Second,
 	}
 
@@ -53,7 +53,7 @@ func TestClientConfig_Validation(t *testing.T) {
 
 func TestClientConfig_DefaultTimeout(t *testing.T) {
 	config := &ClientConfig{
-		Target: "localhost:50051",
+		Target: "localhost:50055",
 		// No timeout specified - should default to 30s
 	}
 
@@ -82,24 +82,6 @@ func TestGetDiskSpace_InvalidPath(t *testing.T) {
 	assert.Contains(t, err.Error(), "filesystem path is required")
 }
 
-func TestGetDiskSpaceTotal_InvalidPath(t *testing.T) {
-	client := &Client{}
-	ctx := context.Background()
-
-	_, err := client.GetDiskSpaceTotal(ctx, "")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "filesystem path is required")
-}
-
-func TestGetDiskSpaceAvailable_InvalidPath(t *testing.T) {
-	client := &Client{}
-	ctx := context.Background()
-
-	_, err := client.GetDiskSpaceAvailable(ctx, "")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "filesystem path is required")
-}
-
 // Integration test helper - requires a running gNMI server.
 func TestIntegration_WithRunningServer(t *testing.T) {
 	// Skip this test unless we're in integration test mode
@@ -108,7 +90,7 @@ func TestIntegration_WithRunningServer(t *testing.T) {
 	}
 
 	config := &ClientConfig{
-		Target:  "localhost:50051",
+		Target:  "localhost:50055",
 		Timeout: 10 * time.Second,
 	}
 
@@ -132,9 +114,8 @@ func TestIntegration_WithRunningServer(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 
-		// Should have at least one supported model
-		assert.NotEmpty(t, resp.SupportedModels)
-		assert.Equal(t, "sonic-system", resp.SupportedModels[0].Name)
+		// Should have no supported models without proper YANG schema
+		assert.Empty(t, resp.SupportedModels)
 	})
 
 	// Test GetDiskSpace
@@ -147,19 +128,5 @@ func TestIntegration_WithRunningServer(t *testing.T) {
 		assert.Greater(t, info.TotalMB, int64(0))
 		assert.GreaterOrEqual(t, info.AvailableMB, int64(0))
 		assert.LessOrEqual(t, info.AvailableMB, info.TotalMB)
-	})
-
-	// Test GetDiskSpaceTotal
-	t.Run("disk_space_total", func(t *testing.T) {
-		totalMB, err := client.GetDiskSpaceTotal(ctx, ".")
-		require.NoError(t, err)
-		assert.Greater(t, totalMB, int64(0))
-	})
-
-	// Test GetDiskSpaceAvailable
-	t.Run("disk_space_available", func(t *testing.T) {
-		availableMB, err := client.GetDiskSpaceAvailable(ctx, ".")
-		require.NoError(t, err)
-		assert.GreaterOrEqual(t, availableMB, int64(0))
 	})
 }

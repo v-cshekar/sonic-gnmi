@@ -79,6 +79,13 @@ func main() {
 		builder = builder.EnableGNOIFile()
 	} else {
 		glog.V(1).Info("gNOI File service disabled (use --enable-gnoi-file to enable)")
+
+	// Configure certificates based on advanced options
+	if config.Global.UseSONiCConfig {
+		glog.V(1).Infof("Using SONiC ConfigDB certificates: redis=%s, db=%d, table=%s",
+			config.Global.RedisAddr, config.Global.RedisDB, config.Global.ConfigTableName)
+		builder = builder.WithSONiCCertificates(config.Global.RedisAddr, config.Global.RedisDB).
+			WithConfigTableName(config.Global.ConfigTableName)
 	}
 
 	// Configure TLS based on command-line flags
