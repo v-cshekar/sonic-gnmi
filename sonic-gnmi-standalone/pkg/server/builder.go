@@ -194,17 +194,8 @@ func (b *ServerBuilder) EnableGNMI() *ServerBuilder {
 	return b
 }
 
-// EnableGNOIFile was removed as SONIC image file listing is now handled
-// through gNMI paths using internal file operations, not gNOI File service.
-// This method is kept for backward compatibility but does nothing.
-func (b *ServerBuilder) EnableGNOIFile() *ServerBuilder {
-	glog.Info("gNOI File service is no longer needed for SONIC image file listing")
-	return b
-}
-
 // EnableServices enables multiple services at once based on a slice of service names.
 // Valid service names include: "gnoi.system", "gnmi".
-// Note: "gnoi.file" is no longer supported - SONIC image file listing uses gNMI paths.
 func (b *ServerBuilder) EnableServices(services []string) *ServerBuilder {
 	for _, service := range services {
 		b.services[service] = true
@@ -350,9 +341,6 @@ func (b *ServerBuilder) registerServices(srv *Server, rootFS string) {
 		glog.Info("Registered gNMI service")
 		serviceCount++
 	}
-
-	// gNOI File service registration removed - SONIC image file listing
-	// is now handled through gNMI paths using internal file operations
 
 	// Future services will be implemented:
 	// - gNOI Containerz service

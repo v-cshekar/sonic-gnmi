@@ -18,8 +18,6 @@
 //	    Disable TLS (TLS is enabled by default)
 //	-mtls
 //	    Enable mutual TLS (requires CA certificate)
-//	-enable-gnoi-file
-//	    (Deprecated) No longer needed - SONIC image file listing uses gNMI paths
 //	-v int
 //	    Verbose logging level (0-2)
 //	-logtostderr
@@ -38,9 +36,6 @@
 //
 //	# With mTLS enabled
 //	./sonic-gnmi-standalone -mtls -tls-ca-cert=ca.crt
-//
-//	# SONIC image file listing (no special flags needed)
-//	./sonic-gnmi-standalone
 package main
 
 import (
@@ -62,9 +57,8 @@ func main() {
 	defer glog.Flush()
 
 	// Log configuration
-	glog.Infof("Starting sonic-gnmi-standalone: addr=%s, rootfs=%s, tls=%t, mtls=%t, gnoi-file=%t",
-		config.Global.Addr, config.Global.RootFS, config.Global.TLSEnabled,
-		config.Global.MTLSEnabled, config.Global.EnableGNOIFile)
+	glog.Infof("Starting sonic-gnmi-standalone: addr=%s, rootfs=%s, tls=%t, mtls=%t",
+		config.Global.Addr, config.Global.RootFS, config.Global.TLSEnabled, config.Global.MTLSEnabled)
 
 	// Create a new server instance using the builder pattern
 	builder := server.NewServerBuilder().
@@ -72,14 +66,6 @@ func main() {
 		WithRootFS(config.Global.RootFS).
 		EnableGNOISystem().
 		EnableGNMI()
-
-	// Conditionally enable gNOI File service based on configuration
-	if config.Global.EnableGNOIFile {
-		glog.V(1).Info("gNOI File service enabled via --enable-gnoi-file flag")
-		builder = builder.EnableGNOIFile()
-	} else {
-		glog.V(1).Info("gNOI File service disabled (use --enable-gnoi-file to enable)")
-	}
 
 	// Configure certificates based on advanced options
 	if config.Global.UseSONiCConfig {
