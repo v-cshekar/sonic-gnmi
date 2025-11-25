@@ -636,16 +636,23 @@ func SaveOnSetEnabled() error {
 func saveOnSetDisabled() error { return nil }
 
 func (s *Server) Set(ctx context.Context, req *gnmipb.SetRequest) (*gnmipb.SetResponse, error) {
+	log.V(2).Infof("[SET DEBUG] Set request received")
 	e := s.ReqFromMaster(req, &s.masterEID)
 	if e != nil {
+		log.V(2).Infof("[SET DEBUG] ReqFromMaster check failed: %v", e)
 		return nil, e
 	}
+	log.V(2).Infof("[SET DEBUG] ReqFromMaster check passed, masterEID: %v", s.masterEID)
 
 	common_utils.IncCounter(common_utils.GNMI_SET)
 	if s.config.EnableTranslibWrite == false && s.config.EnableNativeWrite == false {
+		log.V(2).Infof("[SET DEBUG] Write mode check failed: EnableTranslibWrite=%v, EnableNativeWrite=%v",
+			s.config.EnableTranslibWrite, s.config.EnableNativeWrite)
 		common_utils.IncCounter(common_utils.GNMI_SET_FAIL)
 		return nil, grpc.Errorf(codes.Unimplemented, "GNMI is in read-only mode")
 	}
+	log.V(2).Infof("[SET DEBUG] Write mode check passed: EnableTranslibWrite=%v, EnableNativeWrite=%v",
+		s.config.EnableTranslibWrite, s.config.EnableNativeWrite)
 	var results []*gnmipb.UpdateResult
 
 	/* Fetch the prefix. */
@@ -653,55 +660,83 @@ func (s *Server) Set(ctx context.Context, req *gnmipb.SetRequest) (*gnmipb.SetRe
 	origin := ""
 	if prefix != nil {
 		origin = prefix.Origin
+		log.V(2).Infof("[SET DEBUG] Prefix origin: %s, target: %s, elems: %v",
+			origin, prefix.GetTarget(), prefix.GetElem())
+	} else {
+		log.V(2).Infof("[SET DEBUG] No prefix provided")
 	}
 	extensions := req.GetExtension()
 	encoding := gnmipb.Encoding_JSON_IETF
+	log.V(2).Infof("[SET DEBUG] Extensions count: %d, encoding: %v", len(extensions), encoding)
 
 	var dc sdc.Client
 	var err error
 	paths := req.GetDelete()
+	log.V(2).Infof("[SET DEBUG] Delete paths count: %d", len(paths))
 	for _, path := range req.GetReplace() {
 		paths = append(paths, path.GetPath())
 	}
+	log.V(2).Infof("[SET DEBUG] Replace paths count: %d", len(req.GetReplace()))
 	for _, path := range req.GetUpdate() {
 		paths = append(paths, path.GetPath())
 	}
+	log.V(2).Infof("[SET DEBUG] Update paths count: %d", len(req.GetUpdate()))
+	log.V(2).Infof("[SET DEBUG] Total paths collected: %d", len(paths))
 	if origin == "" {
 		origin, err = ParseOrigin(paths)
 		if err != nil {
+			log.V(2).Infof("[SET DEBUG] ParseOrigin failed: %v", err)
 			return nil, err
 		}
+		log.V(2).Infof("[SET DEBUG] Parsed origin from paths: %s", origin)
+	} else {
+		log.V(2).Infof("[SET DEBUG] Using origin from prefix: %s", origin)
 	}
 	authTarget := "gnmi"
 	if check := IsNativeOrigin(origin); check {
+		log.V(2).Infof("[SET DEBUG] Native origin detected: %s", origin)
 		if s.config.EnableNativeWrite == false {
+			log.V(2).Infof("[SET DEBUG] Native write is disabled")
 			common_utils.IncCounter(common_utils.GNMI_SET_FAIL)
 			return nil, grpc.Errorf(codes.Unimplemented, "GNMI native write is disabled")
 		}
 		var targetDbName string
+		log.V(2).Infof("[SET DEBUG] Creating MixedDbClient with origin=%s, zmqPort=%s, vrf=%s",
+			origin, s.config.ZmqPort, s.config.Vrf)
 		dc, err = sdc.NewMixedDbClient(paths, prefix, origin, encoding, s.config.ZmqPort, s.config.Vrf, &targetDbName)
 		authTarget = "gnmi_" + targetDbName
+		log.V(2).Infof("[SET DEBUG] MixedDbClient created, targetDbName=%s, authTarget=%s", targetDbName, authTarget)
 	} else {
+		log.V(2).Infof("[SET DEBUG] Non-native origin detected: %s, using TranslClient", origin)
 		if s.config.EnableTranslibWrite == false {
+			log.V(2).Infof("[SET DEBUG] Translib write is disabled")
 			common_utils.IncCounter(common_utils.GNMI_SET_FAIL)
 			return nil, grpc.Errorf(codes.Unimplemented, "Translib write is disabled")
 		}
 		/* Create Transl client. */
+		log.V(2).Infof("[SET DEBUG] Creating TranslClient")
 		dc, err = sdc.NewTranslClient(prefix, nil, ctx, extensions)
+		log.V(2).Infof("[SET DEBUG] TranslClient creation result: err=%v", err)
 	}
 
 	if err != nil {
+		log.V(2).Infof("[SET DEBUG] Client creation failed: %v", err)
 		common_utils.IncCounter(common_utils.GNMI_SET_FAIL)
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
+	log.V(2).Infof("[SET DEBUG] Client created successfully, type: %T", dc)
 	defer dc.Close()
 
+	log.V(2).Infof("[SET DEBUG] Authenticating with authTarget=%s, writeAccess=true", authTarget)
 	ctx, err = authenticate(s.config, ctx, authTarget, true)
 	if err != nil {
+		log.V(2).Infof("[SET DEBUG] Authentication failed: %v", err)
 		common_utils.IncCounter(common_utils.GNMI_SET_FAIL)
 		return nil, err
 	}
+	log.V(2).Infof("[SET DEBUG] Authentication successful")
 	/* DELETE */
+	log.V(2).Infof("[SET DEBUG] Processing %d DELETE operations", len(req.GetDelete()))
 	for _, path := range req.GetDelete() {
 		log.V(2).Infof("Delete path: %v", path)
 
@@ -715,6 +750,7 @@ func (s *Server) Set(ctx context.Context, req *gnmipb.SetRequest) (*gnmipb.SetRe
 	}
 
 	/* REPLACE */
+	log.V(2).Infof("[SET DEBUG] Processing %d REPLACE operations", len(req.GetReplace()))
 	for _, path := range req.GetReplace() {
 		log.V(2).Infof("Replace path: %v ", path)
 
@@ -727,6 +763,7 @@ func (s *Server) Set(ctx context.Context, req *gnmipb.SetRequest) (*gnmipb.SetRe
 	}
 
 	/* UPDATE */
+	log.V(2).Infof("[SET DEBUG] Processing %d UPDATE operations", len(req.GetUpdate()))
 	for _, path := range req.GetUpdate() {
 		log.V(2).Infof("Update path: %v ", path)
 
@@ -737,13 +774,20 @@ func (s *Server) Set(ctx context.Context, req *gnmipb.SetRequest) (*gnmipb.SetRe
 		/* Add to Set response results. */
 		results = append(results, &res)
 	}
+	log.V(2).Infof("[SET DEBUG] Total results prepared: %d", len(results))
+	log.V(2).Infof("[SET DEBUG] Calling dc.Set() with Delete=%d, Replace=%d, Update=%d",
+		len(req.GetDelete()), len(req.GetReplace()), len(req.GetUpdate()))
 	err = dc.Set(req.GetDelete(), req.GetReplace(), req.GetUpdate())
 	if err != nil {
+		log.V(2).Infof("[SET DEBUG] dc.Set() failed: %v", err)
 		common_utils.IncCounter(common_utils.GNMI_SET_FAIL)
 	} else {
+		log.V(2).Infof("[SET DEBUG] dc.Set() succeeded, saving startup config")
 		s.SaveStartupConfig()
+		log.V(2).Infof("[SET DEBUG] Startup config save completed")
 	}
 
+	log.V(2).Infof("[SET DEBUG] Returning SetResponse with %d results, error: %v", len(results), err)
 	return &gnmipb.SetResponse{
 		Prefix:   req.GetPrefix(),
 		Response: results,
